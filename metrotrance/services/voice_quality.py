@@ -6,6 +6,7 @@ import json
 import math
 import re
 import shutil
+import tempfile
 import wave
 from array import array
 from dataclasses import asdict, dataclass
@@ -14,6 +15,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from metrotrance import __version__
+from metrotrance.services.audio import normalize_wav_pcm16, wav_info
 
 
 VOICE_TEST_CHUNKS = (
@@ -194,10 +196,32 @@ def _percentile(values: list[float], fraction: float) -> float:
     return ordered[lower] * (1.0 - weight) + ordered[upper] * weight
 
 
-def _wav_duration(path: Path) -> float:
+def _read_native_pcm16(path: Path) -> tuple[int, int, int, int, bytes]:
     with wave.open(str(path), "rb") as wav:
-        rate = wav.getframerate()
-        return wav.getnframes() / rate if rate else 0.0
+        channels = wav.getnchannels()
+        sample_width = wav.getsampwidth()
+        sample_rate = wav.getframerate()
+        frame_count = wav.getnframes()
+        raw = wav.readframes(frame_count)
+    return channels, sample_width, sample_rate, frame_count, raw
+
+
+def _read_pcm16_compatible(path: Path) -> tuple[int, int, int, int, bytes]:
+    """Read normal PCM WAV and WAVE_FORMAT_EXTENSIBLE through one safe path."""
+    try:
+        return _read_native_pcm16(path)
+    except (wave.Error, EOFError) as exc:
+        with tempfile.TemporaryDirectory(prefix="metrotrance-voice-quality-") as temp_dir:
+            normalized = Path(temp_dir) / "normalized.wav"
+            try:
+                normalize_wav_pcm16(path, normalized)
+                return _read_native_pcm16(normalized)
+            except Exception as normalize_exc:  # noqa: BLE001
+                raise ValueError(f"Не удалось декодировать WAV для анализа: {normalize_exc}") from exc
+
+
+def _wav_duration(path: Path) -> float:
+    return float(wav_info(path)[4])
 
 
 def _word_count(text: str) -> int:
@@ -219,12 +243,7 @@ def analyze_pcm16_voice(
     if not path.is_file():
         raise FileNotFoundError(path)
 
-    with wave.open(str(path), "rb") as wav:
-        channels = wav.getnchannels()
-        sample_width = wav.getsampwidth()
-        sample_rate = wav.getframerate()
-        frame_count = wav.getnframes()
-        raw = wav.readframes(frame_count)
+    channels, sample_width, sample_rate, frame_count, raw = _read_pcm16_compatible(path)
 
     if sample_width != 2:
         raise ValueError("Voice quality analysis expects PCM16 WAV")
