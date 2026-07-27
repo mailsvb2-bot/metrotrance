@@ -7,6 +7,8 @@ import pytest
 from metrotrance.config import get_settings
 from metrotrance.services.pronunciation import (
     RussianPronunciation,
+    _ACCENTOR_SHA256,
+    _ACCENTOR_SIZE,
     plus_to_unicode,
     strip_stress,
     validate_dictionary,
@@ -67,10 +69,14 @@ def test_monosyllabic_accents_are_removed(tmp_path: Path) -> None:
     assert result.tts_text == "Я на дом"
 
 
-def test_source_accentor_is_shipped() -> None:
+def test_optional_bundled_accentor_is_verified_when_present() -> None:
     pronunciation = RussianPronunciation(get_settings(Path(__file__).resolve().parents[1]))
-    assert pronunciation.bundled_accentor_path.exists()
-    assert pronunciation.bundled_accentor_path.stat().st_size > 50_000_000
+    model = pronunciation.bundled_accentor_path
+    if not model.exists():
+        assert "accentor.pt" in str(model)
+        return
+    assert model.stat().st_size == _ACCENTOR_SIZE
+    assert pronunciation._sha256(model) == _ACCENTOR_SHA256  # noqa: SLF001
 
 
 def test_repair_clears_negative_and_text_caches(tmp_path: Path, monkeypatch) -> None:
