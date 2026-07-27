@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
 from metrotrance import __version__
 
 import windows_installer_core as _core
 
 
+# Keep one canonical product version while preserving the public installer module
+# and its source-level contracts used by release and packaging checks.
 _core.VERSION = __version__
 
 for _name in dir(_core):
@@ -12,6 +17,20 @@ for _name in dir(_core):
         globals()[_name] = getattr(_core, _name)
 
 VERSION = __version__
+RUNTIME_ROOT = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "MetroTrance"
+TEMP_DIR = RUNTIME_ROOT / "tmp"
+PIP_CACHE_DIR = RUNTIME_ROOT / "pip-cache"
+VENV_DIR = RUNTIME_ROOT / "venv"
+RUNTIME_APP = RUNTIME_ROOT / "app"
+CORE_PACKAGES = _core.CORE_PACKAGES
+QWEN_PACKAGES = _core.QWEN_PACKAGES
+REQUIRED_SOURCE_PATHS = _core.REQUIRED_SOURCE_PATHS
+
+
+def validate_source_bundle() -> None:
+    _core.validate_source_bundle()
+
+
 del _name
 
 
