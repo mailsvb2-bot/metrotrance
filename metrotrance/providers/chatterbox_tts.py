@@ -2,10 +2,16 @@ from __future__ import annotations
 
 import importlib.util
 import inspect
+import json
 import threading
 from pathlib import Path
 
 from metrotrance.config import Settings
+from metrotrance.services.natural_voice import (
+    choose_best_take,
+    natural_take_count,
+    natural_take_seed,
+)
 
 
 class ChatterboxTTSError(RuntimeError):
@@ -40,7 +46,7 @@ class ChatterboxTTSProvider:
     def health(self) -> tuple[bool, str]:
         if not self.installed():
             return False, "Chatterbox не установлен"
-        return True, "Chatterbox Multilingual — только чистый голосовой референс"
+        return True, "Chatterbox Multilingual — чистый референс и естественный многодублевый отбор"
 
     def _resolve_device(self) -> str:
         import torch
@@ -85,8 +91,6 @@ class ChatterboxTTSProvider:
         try:
             self._model = loader(**kwargs)
         except TypeError as exc:
-            # Some distributions expose an imprecise signature but still reject
-            # the V3 selector at runtime. Retry once with the legacy API.
             if "t3_model" in kwargs and "t3_model" in str(exc):
                 kwargs.pop("t3_model", None)
                 try:
@@ -134,9 +138,7 @@ class ChatterboxTTSProvider:
                 cfg_weight = 0.34
                 temperature = 0.70
 
-            # Studio masters with music/reverb are never used as prompts.
-            # They may inform pacing elsewhere, but the voice model sees only
-            # the user's clean, transcript-matched reference recording.
+            # Studio masters with music/reverb are never used as cloning prompts.
             prompt = reference_audio
             if not prompt.is_file():
                 raise ChatterboxTTSError("Не найден чистый образец голоса")
@@ -150,33 +152,67 @@ class ChatterboxTTSProvider:
         with self._lock:
             model = self._load()
             seed_base = int(performance.get("seed", 0))
+            takes_per_chunk = natural_take_count(performance)
             for zero_index, text in enumerate(chunks):
                 index = zero_index + 1
                 exaggeration, cfg_weight, temperature, prompt = parameters_for(zero_index)
-                chunk_seed = (seed_base + index * 1009) % (2**31 - 1)
-                try:
-                    candidates = {
-                        "language_id": "ru",
-                        "audio_prompt_path": str(prompt),
-                        "exaggeration": exaggeration,
-                        "cfg_weight": cfg_weight,
-                        "temperature": temperature,
-                    }
+                rendered_takes: list[tuple[object, int]] = []
+                seeds: list[int] = []
+                for take_index in range(takes_per_chunk):
+                    chunk_seed = natural_take_seed(seed_base, index, take_index)
+                    seeds.append(chunk_seed)
                     try:
-                        signature = inspect.signature(model.generate)
-                        if not any(p.kind == inspect.Parameter.VAR_KEYWORD for p in signature.parameters.values()):
-                            candidates = {k: v for k, v in candidates.items() if k in signature.parameters}
-                    except (TypeError, ValueError):
-                        pass
-                    cuda_devices = list(range(torch.cuda.device_count())) if torch.cuda.is_available() else []
-                    with torch.random.fork_rng(devices=cuda_devices):
-                        torch.manual_seed(chunk_seed)
-                        if torch.cuda.is_available():
-                            torch.cuda.manual_seed_all(chunk_seed)
-                        wav = model.generate(text, **candidates)
-                except Exception as exc:  # noqa: BLE001
-                    raise ChatterboxTTSError(f"Ошибка синтеза Chatterbox: {exc}") from exc
+                        candidates = {
+                            "language_id": "ru",
+                            "audio_prompt_path": str(prompt),
+                            "exaggeration": exaggeration,
+                            "cfg_weight": cfg_weight,
+                            "temperature": temperature,
+                        }
+                        try:
+                            signature = inspect.signature(model.generate)
+                            if not any(p.kind == inspect.Parameter.VAR_KEYWORD for p in signature.parameters.values()):
+                                candidates = {k: v for k, v in candidates.items() if k in signature.parameters}
+                        except (TypeError, ValueError):
+                            pass
+                        cuda_devices = list(range(torch.cuda.device_count())) if torch.cuda.is_available() else []
+                        with torch.random.fork_rng(devices=cuda_devices):
+                            torch.manual_seed(chunk_seed)
+                            if torch.cuda.is_available():
+                                torch.cuda.manual_seed_all(chunk_seed)
+                            wav = model.generate(text, **candidates)
+                    except Exception as exc:  # noqa: BLE001
+                        raise ChatterboxTTSError(
+                            f"Ошибка синтеза Chatterbox на фрагменте {index}, дубле {take_index + 1}: {exc}"
+                        ) from exc
+                    rendered_takes.append((wav, int(model.sr)))
+
+                selected_index, selected_waveform, sample_rate, scores = choose_best_take(rendered_takes, text)
                 path = output_dir / f"chunk_{index:03d}.wav"
-                ta.save(str(path), wav, model.sr)
+                ta.save(str(path), selected_waveform, sample_rate)
+                (output_dir / f"chunk_{index:03d}_takes.json").write_text(
+                    json.dumps(
+                        {
+                            "schema": "metrovoice.take-selection.v1",
+                            "provider": self.name,
+                            "chunk": index,
+                            "takes": takes_per_chunk,
+                            "selected_take": selected_index + 1,
+                            "selected_seed": seeds[selected_index],
+                            "scores": [
+                                {
+                                    "take": take_index + 1,
+                                    "seed": seeds[take_index],
+                                    **score.public_dict(),
+                                }
+                                for take_index, score in enumerate(scores)
+                            ],
+                            "note": "Автоматический отбор исключает технически слабые дубли, но не заменяет прослушивание.",
+                        },
+                        ensure_ascii=False,
+                        indent=2,
+                    ),
+                    encoding="utf-8",
+                )
                 paths.append(path)
         return paths
