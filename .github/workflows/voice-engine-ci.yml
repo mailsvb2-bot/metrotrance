@@ -30,15 +30,22 @@ jobs:
       - run: python -m pip install -q --upgrade pip
       - run: python -m pip install -q -e ".[test]"
       - run: python -m compileall -q metrotrance tests
-      - name: Natural voice and audio joins
-        run: |
-          set +e
-          python -m pytest -q --tb=short tests/test_natural_voice.py tests/test_natural_join.py tests/test_audio.py > pytest.log 2>&1
-          status=$?
-          tail -n 100 pytest.log
-          exit $status
+      - run: python -m pytest -q --tb=short tests/test_natural_voice.py tests/test_natural_join.py tests/test_audio.py
 
-  provider-contracts:
+  provider-contract:
+    name: provider-${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: qwen
+            file: tests/test_qwen_provider.py
+          - name: chatterbox
+            file: tests/test_chatterbox_compatibility.py
+          - name: priority
+            file: tests/test_provider_priority.py
+          - name: voice-test-job
+            file: tests/test_voice_test_job.py
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -47,13 +54,7 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: python -m pip install -q -e ".[test]"
-      - name: Qwen and Chatterbox contracts
-        run: |
-          set +e
-          python -m pytest -q --tb=short tests/test_qwen_provider.py tests/test_chatterbox_compatibility.py tests/test_provider_priority.py tests/test_voice_test_job.py > pytest.log 2>&1
-          status=$?
-          tail -n 100 pytest.log
-          exit $status
+      - run: python -m pytest -q --tb=short ${{ matrix.file }}
 
   studio-profile:
     runs-on: ubuntu-latest
@@ -64,15 +65,36 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: python -m pip install -q -e ".[test]"
-      - name: Private corpus fallbacks and performance plan
-        run: |
-          set +e
-          python -m pytest -q --tb=short tests/test_style_corpus.py tests/test_studio_profile.py tests/test_performance_director.py tests/test_studio_audio_mix.py > pytest.log 2>&1
-          status=$?
-          tail -n 100 pytest.log
-          exit $status
+      - run: python -m pytest -q --tb=short tests/test_style_corpus.py tests/test_studio_profile.py tests/test_performance_director.py tests/test_studio_audio_mix.py
 
-  remaining-suite:
+  regression-contour:
+    name: regression-${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: domain
+            files: >-
+              tests/test_ambient.py tests/test_chunker.py tests/test_models.py
+              tests/test_pacing.py tests/test_safety.py tests/test_script_writer.py
+              tests/test_text_import.py
+          - name: ui
+            files: >-
+              tests/test_dialog_close_ui.py tests/test_manual_stress_editor_ui.py
+              tests/test_sound_library_ui.py tests/test_stress_preview_ui.py
+              tests/test_voice_lab_ui.py
+          - name: assets-scenes
+            files: >-
+              tests/test_audio_assets.py tests/test_audio_assets_api.py
+              tests/test_scene_audio_engine.py tests/test_scene_renderer.py
+          - name: voice-state
+            files: >-
+              tests/test_voice_approval_gate.py tests/test_voice_profile.py
+              tests/test_voice_quality.py
+          - name: runtime-windows
+            files: >-
+              tests/test_local_llama.py tests/test_pronunciation.py
+              tests/test_windows_launchers.py
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -81,21 +103,4 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: python -m pip install -q -e ".[test]"
-      - name: Remaining regression suite
-        run: |
-          set +e
-          python -m pytest -q --tb=short \
-            --ignore=tests/test_natural_voice.py \
-            --ignore=tests/test_natural_join.py \
-            --ignore=tests/test_audio.py \
-            --ignore=tests/test_qwen_provider.py \
-            --ignore=tests/test_chatterbox_compatibility.py \
-            --ignore=tests/test_provider_priority.py \
-            --ignore=tests/test_voice_test_job.py \
-            --ignore=tests/test_style_corpus.py \
-            --ignore=tests/test_studio_profile.py \
-            --ignore=tests/test_performance_director.py \
-            --ignore=tests/test_studio_audio_mix.py > pytest.log 2>&1
-          status=$?
-          tail -n 100 pytest.log
-          exit $status
+      - run: python -m pytest -q --tb=short ${{ matrix.files }}
