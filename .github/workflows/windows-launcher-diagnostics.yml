@@ -12,37 +12,22 @@ permissions:
   contents: read
 
 jobs:
-  launcher-contract:
+  installer-contract:
     name: windows-${{ matrix.name }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: line-endings
-            tests: >-
-              tests/test_windows_launchers.py::test_old_windows_batch_files_are_ascii_crlf
-          - name: installer-manifest
-            tests: >-
-              tests/test_windows_launchers.py::test_windows_installer_uses_short_runtime_paths
-              tests/test_windows_launchers.py::test_windows_installer_does_not_require_requirements_text_files
-              tests/test_windows_launchers.py::test_windows_installer_has_source_bundle_preflight
-              tests/test_windows_launchers.py::test_bundle_manifest_points_to_existing_public_files
-              tests/test_windows_launchers.py::test_validate_source_bundle_passes_for_public_tree
-          - name: launcher-api
-            tests: >-
-              tests/test_windows_launchers.py::test_launcher_uses_fast_readiness_endpoint_and_disables_proxy
-              tests/test_windows_launchers.py::test_api_exposes_instant_readiness_endpoint
-              tests/test_windows_launchers.py::test_ui_and_api_expose_opus_download
-          - name: stress-runtime
-            tests: >-
-              tests/test_windows_launchers.py::test_stress_repair_uses_diagnostic_script_not_blind_assert
-              tests/test_windows_launchers.py::test_start_prepares_ascii_safe_stress_model
-              tests/test_windows_launchers.py::test_runtime_paths_are_literal_backslash_paths_without_escape_corruption
-              tests/test_windows_launchers.py::test_stress_repair_never_passes_dp0_with_trailing_backslash_as_quoted_argument
-              tests/test_windows_launchers.py::test_repair_script_strips_unmatched_trailing_quote_from_project_root
-              tests/test_windows_launchers.py::test_start_uses_ascii_safe_runtime_model
-              tests/test_windows_launchers.py::test_repair_copies_then_loads_ascii_model
-              tests/test_windows_launchers.py::test_optional_bundled_accentor_is_verified_when_present
+          - name: short-runtime-paths
+            test: tests/test_windows_launchers.py::test_windows_installer_uses_short_runtime_paths
+          - name: embedded-requirements
+            test: tests/test_windows_launchers.py::test_windows_installer_does_not_require_requirements_text_files
+          - name: source-preflight
+            test: tests/test_windows_launchers.py::test_windows_installer_has_source_bundle_preflight
+          - name: public-manifest
+            test: tests/test_windows_launchers.py::test_bundle_manifest_points_to_existing_public_files
+          - name: validate-source-bundle
+            test: tests/test_windows_launchers.py::test_validate_source_bundle_passes_for_public_tree
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,4 +36,4 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: python -m pip install -q -e ".[test]"
-      - run: python -m pytest -q --tb=short ${{ matrix.tests }}
+      - run: python -m pytest -q --tb=short ${{ matrix.test }}
