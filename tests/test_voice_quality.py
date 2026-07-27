@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import math
+import subprocess
 import wave
 from pathlib import Path
 
 import pytest
 
 from metrotrance.config import get_settings
+from metrotrance.services.audio import ffmpeg_executable
 from metrotrance.services.voice_quality import (
     analyze_pcm16_voice,
     load_voice_approval,
@@ -55,6 +57,43 @@ def test_voice_quality_report_is_explicitly_not_a_naturalness_score(tmp_path: Pa
     assert metrics.sample_rate == 24000
     assert metrics.expected_word_count > 0
     assert any("не доказывает живость" in item for item in metrics.limitations)
+
+
+def test_voice_quality_accepts_wave_format_extensible(tmp_path: Path) -> None:
+    source = tmp_path / "source.wav"
+    _write_tone(source)
+    extensible = tmp_path / "extensible.wav"
+    result = subprocess.run(
+        [
+            ffmpeg_executable(),
+            "-y",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-i",
+            str(source),
+            "-ac",
+            "2",
+            "-c:a",
+            "pcm_s24le",
+            str(extensible),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert int.from_bytes(extensible.read_bytes()[20:22], "little") == 65534
+
+    metrics = analyze_pcm16_voice(
+        extensible,
+        expected_text="Добрый вечер. Это спокойная тестовая фраза.",
+        speech_parts=[source],
+    )
+
+    assert metrics.structural_ok
+    assert metrics.duration_seconds == 20.0
+    assert metrics.sample_rate == 24000
 
 
 def test_voice_approval_is_bound_to_full_environment_and_candidate_snapshot(tmp_path: Path, monkeypatch) -> None:
