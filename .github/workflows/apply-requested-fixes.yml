@@ -1,21 +1,20 @@
 name: Apply requested MetroTrance fixes
 
 on:
-  pull_request:
+  push:
     branches:
-      - main
+      - agent/fix-wave-extensible-installer-version
 
 permissions:
   contents: write
 
 jobs:
   apply-fixes:
-    if: github.head_ref == 'agent/fix-wave-extensible-installer-version'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
 
       - name: Apply targeted fixes and regression coverage
@@ -202,4 +201,4 @@ def test_release_version_is_synchronized() -> None:
           git rm .github/workflows/apply-requested-fixes.yml
           git add metrotrance/services/voice_quality.py windows_installer.py tests/test_voice_quality.py tests/test_release_version_sync.py bundle_manifest.json .github/workflows/voice-engine-ci.yml
           git commit -m "Fix Python 3.12 WAV handling and installer version"
-          git push origin HEAD:${{ github.head_ref }}
+          git push origin HEAD:${{ github.ref_name }}
