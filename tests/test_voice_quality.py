@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from metrotrance.config import get_settings
+from metrotrance.services import voice_quality
 from metrotrance.services.audio import ffmpeg_executable
 from metrotrance.services.voice_quality import (
     analyze_pcm16_voice,
@@ -57,6 +58,31 @@ def test_voice_quality_report_is_explicitly_not_a_naturalness_score(tmp_path: Pa
     assert metrics.sample_rate == 24000
     assert metrics.expected_word_count > 0
     assert any("не доказывает живость" in item for item in metrics.limitations)
+
+
+def test_pcm16_compatibility_normalizes_by_actual_sample_width(tmp_path: Path, monkeypatch) -> None:
+    source = tmp_path / "source.wav"
+    source.write_bytes(b"source")
+    normalized_result = (1, 2, 24000, 1, b"\x00\x00")
+    reads: list[Path] = []
+
+    def fake_read(path: Path) -> tuple[int, int, int, int, bytes]:
+        current = Path(path)
+        reads.append(current)
+        if current == source:
+            return (2, 3, 24000, 1, b"\x00" * 6)
+        assert current.name == "normalized.wav"
+        return normalized_result
+
+    def fake_normalize(source_path: Path, destination: Path) -> None:
+        assert source_path == source
+        destination.write_bytes(b"normalized")
+
+    monkeypatch.setattr(voice_quality, "_read_native_pcm16", fake_read)
+    monkeypatch.setattr(voice_quality, "normalize_wav_pcm16", fake_normalize)
+
+    assert voice_quality._read_pcm16_compatible(source) == normalized_result
+    assert len(reads) == 2
 
 
 def test_voice_quality_accepts_wave_format_extensible(tmp_path: Path) -> None:

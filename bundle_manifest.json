@@ -61,6 +61,7 @@
     "metrotrance/services/text_import.py",
     "metrotrance/services/voice_profile.py",
     "metrotrance/services/voice_quality.py",
+    "metrotrance/services/voice_quality_core.py",
     "metrotrance/static/app.js",
     "metrotrance/static/index.html",
     "metrotrance/static/styles.css",
@@ -73,8 +74,10 @@
     "start_linux.sh",
     "tests/test_natural_join.py",
     "tests/test_natural_voice.py",
+    "tests/test_release_version_sync.py",
     "tests/test_voice_quality.py",
     "tests/test_windows_launchers.py",
-    "windows_installer.py"
+    "windows_installer.py",
+    "windows_installer_core.py"
   ]
 }
