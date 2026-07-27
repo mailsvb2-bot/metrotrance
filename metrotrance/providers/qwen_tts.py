@@ -3,10 +3,16 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import inspect
+import json
 import threading
 from pathlib import Path
 
 from metrotrance.config import Settings
+from metrotrance.services.natural_voice import (
+    choose_best_take,
+    natural_take_count,
+    natural_take_seed,
+)
 
 
 class QwenTTSError(RuntimeError):
@@ -45,7 +51,7 @@ class QwenTTSProvider:
     def health(self) -> tuple[bool, str]:
         if not self.installed():
             return False, "Qwen3-TTS не установлен"
-        return True, f"Qwen3-TTS: {self.settings.qwen_tts_model}"
+        return True, f"Qwen3-TTS: {self.settings.qwen_tts_model}; естественный многодублевый отбор включён"
 
     def _resolve_device(self):
         import torch
@@ -130,7 +136,7 @@ class QwenTTSProvider:
             "top_k": top_k,
             "top_p": top_p,
             "temperature": temperature,
-            "repetition_penalty": 1.06,
+            "repetition_penalty": 1.08,
             "subtalker_dosample": True,
             "subtalker_top_k": top_k,
             "subtalker_top_p": top_p,
@@ -155,49 +161,79 @@ class QwenTTSProvider:
         import soundfile as sf
         import torch
 
+        performance = performance or {}
         output_dir.mkdir(parents=True, exist_ok=True)
         with self._lock:
             model = self._load()
             prompt = self._voice_prompt(reference_audio, transcript)
-            cue_values = (performance or {}).get("cues") or []
+            cue_values = performance.get("cues") or []
             paths: list[Path] = []
-            seed_base = int((performance or {}).get("seed", 0))
+            seed_base = int(performance.get("seed", 0))
+            takes_per_chunk = natural_take_count(performance)
             for index, text in enumerate(chunks, start=1):
                 cue = cue_values[index - 1] if index - 1 < len(cue_values) else None
                 generation_kwargs = self._generation_kwargs(model, performance, cue)
-                chunk_seed = (seed_base + index * 1009) % (2**31 - 1)
                 cuda_devices = []
                 if self._resolve_device().startswith("cuda") and torch.cuda.is_available():
                     cuda_devices = list(range(torch.cuda.device_count()))
-                try:
-                    with torch.random.fork_rng(devices=cuda_devices):
-                        torch.manual_seed(chunk_seed)
-                        if torch.cuda.is_available():
-                            torch.cuda.manual_seed_all(chunk_seed)
-                        wavs, sample_rate = model.generate_voice_clone(
-                            text=text,
-                            language="Russian",
-                            voice_clone_prompt=prompt,
-                            **generation_kwargs,
-                        )
-                except TypeError:
-                    # Compatibility with older qwen-tts builds that do not expose
-                    # all sampling parameters yet.
+
+                rendered_takes: list[tuple[object, int]] = []
+                seeds: list[int] = []
+                for take_index in range(takes_per_chunk):
+                    chunk_seed = natural_take_seed(seed_base, index, take_index)
+                    seeds.append(chunk_seed)
                     try:
                         with torch.random.fork_rng(devices=cuda_devices):
                             torch.manual_seed(chunk_seed)
                             if torch.cuda.is_available():
                                 torch.cuda.manual_seed_all(chunk_seed)
-                            wavs, sample_rate = model.generate_voice_clone(
-                                text=text,
-                                language="Russian",
-                                voice_clone_prompt=prompt,
-                            )
+                            try:
+                                wavs, sample_rate = model.generate_voice_clone(
+                                    text=text,
+                                    language="Russian",
+                                    voice_clone_prompt=prompt,
+                                    **generation_kwargs,
+                                )
+                            except TypeError:
+                                # Compatibility with older qwen-tts builds that do
+                                # not expose all sampling parameters yet.
+                                wavs, sample_rate = model.generate_voice_clone(
+                                    text=text,
+                                    language="Russian",
+                                    voice_clone_prompt=prompt,
+                                )
                     except Exception as exc:  # noqa: BLE001
-                        raise QwenTTSError(f"Ошибка синтеза Qwen3-TTS на фрагменте {index}: {exc}") from exc
-                except Exception as exc:  # noqa: BLE001
-                    raise QwenTTSError(f"Ошибка синтеза Qwen3-TTS на фрагменте {index}: {exc}") from exc
+                        raise QwenTTSError(
+                            f"Ошибка синтеза Qwen3-TTS на фрагменте {index}, дубле {take_index + 1}: {exc}"
+                        ) from exc
+                    rendered_takes.append((wavs[0], int(sample_rate)))
+
+                selected_index, selected_waveform, sample_rate, scores = choose_best_take(rendered_takes, text)
                 path = output_dir / f"chunk_{index:03d}.wav"
-                sf.write(str(path), wavs[0], sample_rate, subtype="PCM_16")
+                sf.write(str(path), selected_waveform, sample_rate, subtype="PCM_16")
+                (output_dir / f"chunk_{index:03d}_takes.json").write_text(
+                    json.dumps(
+                        {
+                            "schema": "metrovoice.take-selection.v1",
+                            "provider": self.name,
+                            "chunk": index,
+                            "takes": takes_per_chunk,
+                            "selected_take": selected_index + 1,
+                            "selected_seed": seeds[selected_index],
+                            "scores": [
+                                {
+                                    "take": take_index + 1,
+                                    "seed": seeds[take_index],
+                                    **score.public_dict(),
+                                }
+                                for take_index, score in enumerate(scores)
+                            ],
+                            "note": "Автоматический отбор исключает технически слабые дубли, но не заменяет прослушивание.",
+                        },
+                        ensure_ascii=False,
+                        indent=2,
+                    ),
+                    encoding="utf-8",
+                )
                 paths.append(path)
             return paths

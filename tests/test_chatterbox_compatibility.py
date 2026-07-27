@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import sys
 from types import ModuleType, SimpleNamespace
 
@@ -15,6 +16,18 @@ def _install_fake_module(monkeypatch, cls) -> None:
     monkeypatch.setitem(sys.modules, "chatterbox.mtl_tts", module)
 
 
+def _install_fake_torch(monkeypatch) -> None:
+    torch = ModuleType("torch")
+    torch.manual_seed = lambda _seed: None
+    torch.random = SimpleNamespace(fork_rng=lambda devices=None: contextlib.nullcontext())
+    torch.cuda = SimpleNamespace(
+        is_available=lambda: False,
+        device_count=lambda: 0,
+        manual_seed_all=lambda _seed: None,
+    )
+    monkeypatch.setitem(sys.modules, "torch", torch)
+
+
 def test_loader_supports_legacy_chatterbox_without_t3_model(monkeypatch) -> None:
     calls: list[dict] = []
 
@@ -25,6 +38,7 @@ def test_loader_supports_legacy_chatterbox_without_t3_model(monkeypatch) -> None
             return object()
 
     _install_fake_module(monkeypatch, LegacyModel)
+    _install_fake_torch(monkeypatch)
     provider = ChatterboxTTSProvider(SimpleNamespace(chatterbox_device="cpu"))
     model = provider._load()  # noqa: SLF001 - compatibility regression
 
@@ -42,6 +56,7 @@ def test_loader_requests_v3_when_supported(monkeypatch) -> None:
             return object()
 
     _install_fake_module(monkeypatch, V3Model)
+    _install_fake_torch(monkeypatch)
     provider = ChatterboxTTSProvider(SimpleNamespace(chatterbox_device="cpu"))
     model = provider._load()  # noqa: SLF001 - compatibility regression
 
@@ -62,6 +77,7 @@ def test_chatterbox_ignores_studio_reference_paths_and_uses_clean_reference(monk
             generated.append({"text": text, **kwargs})
             return FakeWave()
 
+    _install_fake_torch(monkeypatch)
     provider = ChatterboxTTSProvider(SimpleNamespace(chatterbox_device="cpu"))
     provider._model = FakeModel()  # noqa: SLF001
 
@@ -79,7 +95,11 @@ def test_chatterbox_ignores_studio_reference_paths_and_uses_clean_reference(monk
         tmp_path / "out",
         clean,
         "Тестовая фраза.",
-        performance={"reference_audio_paths": [str(contaminated)]},
+        performance={
+            "reference_audio_paths": [str(contaminated)],
+            "takes_per_chunk": 1,
+        },
     )
 
+    assert len(generated) == 1
     assert generated[0]["audio_prompt_path"] == str(clean)

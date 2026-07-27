@@ -1,0 +1,164 @@
+name: Voice Engine CI
+
+on:
+  push:
+    branches:
+      - main
+      - feature/natural-voice-engine-v04
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  natural-core:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: python -m pip install -q --upgrade pip
+      - run: python -m pip install -q -e ".[test]"
+      - run: python -m compileall -q metrotrance tests
+      - run: python -m pytest -q --tb=short tests/test_natural_voice.py tests/test_natural_join.py tests/test_audio.py
+
+  provider-contract:
+    name: provider-${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: qwen
+            file: tests/test_qwen_provider.py
+          - name: chatterbox
+            file: tests/test_chatterbox_compatibility.py
+          - name: priority
+            file: tests/test_provider_priority.py
+          - name: voice-test-job
+            file: tests/test_voice_test_job.py
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: python -m pip install -q -e ".[test]"
+      - name: Run provider contract
+        run: |
+          set +e
+          python -m pytest -q --tb=long "${{ matrix.file }}" > "pytest-${{ matrix.name }}.log" 2>&1
+          status=$?
+          cat "pytest-${{ matrix.name }}.log"
+          exit $status
+      - name: Upload provider diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-provider-${{ matrix.name }}
+          path: pytest-${{ matrix.name }}.log
+          if-no-files-found: error
+      - name: Post provider failure to PR
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "### CI failure: provider-${{ matrix.name }}"
+            echo
+            echo '```text'
+            cat "pytest-${{ matrix.name }}.log"
+            echo '```'
+          } > diagnostic.md
+          gh pr comment "${{ github.event.pull_request.number }}" --body-file diagnostic.md
+
+  studio-profile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: python -m pip install -q -e ".[test]"
+      - run: python -m pytest -q --tb=short tests/test_style_corpus.py tests/test_studio_profile.py tests/test_performance_director.py tests/test_studio_audio_mix.py
+
+  regression-contour:
+    name: regression-${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: domain
+            files: >-
+              tests/test_ambient.py tests/test_chunker.py tests/test_models.py
+              tests/test_pacing.py tests/test_safety.py tests/test_script_writer.py
+              tests/test_text_import.py
+          - name: ui
+            files: >-
+              tests/test_dialog_close_ui.py tests/test_manual_stress_editor_ui.py
+              tests/test_sound_library_ui.py tests/test_stress_preview_ui.py
+              tests/test_voice_lab_ui.py
+          - name: assets-scenes
+            files: >-
+              tests/test_audio_assets.py tests/test_audio_assets_api.py
+              tests/test_scene_audio_engine.py tests/test_scene_renderer.py
+          - name: voice-state
+            files: >-
+              tests/test_voice_approval_gate.py tests/test_voice_profile.py
+              tests/test_voice_quality.py
+          - name: local-llama
+            files: tests/test_local_llama.py
+          - name: pronunciation
+            files: tests/test_pronunciation.py
+          - name: windows-launchers
+            files: tests/test_windows_launchers.py
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: python -m pip install -q -e ".[test]"
+      - name: Run regression contour
+        run: |
+          set +e
+          python -m pytest -q --tb=long ${{ matrix.files }} > "pytest-${{ matrix.name }}.log" 2>&1
+          status=$?
+          cat "pytest-${{ matrix.name }}.log"
+          exit $status
+      - name: Upload regression diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-regression-${{ matrix.name }}
+          path: pytest-${{ matrix.name }}.log
+          if-no-files-found: error
+      - name: Post regression failure to PR
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "### CI failure: regression-${{ matrix.name }}"
+            echo
+            echo '```text'
+            cat "pytest-${{ matrix.name }}.log"
+            echo '```'
+          } > diagnostic.md
+          gh pr comment "${{ github.event.pull_request.number }}" --body-file diagnostic.md

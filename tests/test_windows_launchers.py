@@ -1,3 +1,4 @@
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -55,15 +56,17 @@ def test_windows_installer_has_source_bundle_preflight() -> None:
     assert "REQUIRED_SOURCE_PATHS" in source
 
 
-def test_bundle_manifest_points_to_existing_files() -> None:
+def test_bundle_manifest_points_to_existing_public_files() -> None:
     manifest = json.loads((ROOT / "bundle_manifest.json").read_text(encoding="utf-8"))
-    assert manifest["version"] == "0.3.1"
-    assert manifest["package_kind"] == "complete"
+    assert manifest["version"] == "0.4.0"
+    assert manifest["package_kind"] == "source-clean"
     missing = [name for name in manifest["required_files"] if not (ROOT / name).is_file()]
     assert missing == []
+    assert not any(name.endswith(".wav") for name in manifest["required_files"])
+    assert "metrotrance/resources/silero_stress/accentor.pt" not in manifest["required_files"]
 
 
-def test_validate_source_bundle_passes_for_complete_tree() -> None:
+def test_validate_source_bundle_passes_for_public_tree() -> None:
     spec = importlib.util.spec_from_file_location("windows_installer", ROOT / "windows_installer.py")
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
@@ -155,11 +158,11 @@ def test_repair_copies_then_loads_ascii_model() -> None:
     assert "ASCII-only path" in script
 
 
-def test_complete_bundle_contains_full_verified_accentor_model() -> None:
+def test_optional_bundled_accentor_is_verified_when_present() -> None:
     from metrotrance.services.pronunciation import _ACCENTOR_SHA256, _ACCENTOR_SIZE
 
     model = ROOT / "metrotrance" / "resources" / "silero_stress" / "accentor.pt"
-    assert model.is_file()
+    if not model.is_file():
+        return
     assert model.stat().st_size == _ACCENTOR_SIZE
-    import hashlib
     assert hashlib.sha256(model.read_bytes()).hexdigest() == _ACCENTOR_SHA256
