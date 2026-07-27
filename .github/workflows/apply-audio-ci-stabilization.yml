@@ -1,0 +1,188 @@
+name: Apply audio CI stabilization
+
+on:
+  push:
+    branches:
+      - fix/ci-stabilization-v040
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/ci-stabilization-v040
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Apply classic PCM16 normalization fix
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("metrotrance/services/audio.py")
+          text = path.read_text(encoding="utf-8")
+          old = '''    output.parent.mkdir(parents=True, exist_ok=True)
+    command = [
+        ffmpeg_executable(),
+        "-y",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-i",
+        str(source),
+        "-vn",
+        "-ac",
+        str(channels),
+        "-ar",
+        str(sample_rate),
+        "-c:a",
+        "pcm_s16le",
+        "-f",
+        "wav",
+        str(output),
+    ]
+    result = subprocess.run(command, capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        raise AudioPipelineError(result.stderr.strip() or f"Не удалось нормализовать {source.name}")
+    try:
+        channels_out, width, rate, _, _ = _native_wav_info(output)
+    except (wave.Error, EOFError) as exc:
+        raise AudioPipelineError(f"FFmpeg создал некорректный PCM WAV: {output.name}") from exc
+    if (channels_out, width, rate) != (channels, 2, sample_rate):
+        raise AudioPipelineError(
+            f"Некорректный формат после нормализации: {channels_out} каналов, {width * 8} бит, {rate} Гц"
+        )
+    return output
+'''
+          new = '''    output.parent.mkdir(parents=True, exist_ok=True)
+    # Decode into headerless signed PCM first, then write the WAV container with
+    # Python. New FFmpeg builds may choose WAVE_FORMAT_EXTENSIBLE (65534) even
+    # for mono pcm_s16le; Python 3.11/3.12 wave cannot read that container.
+    with tempfile.TemporaryDirectory(prefix="metrotrance-pcm16-") as temp_dir:
+        raw_path = Path(temp_dir) / "audio.s16le"
+        command = [
+            ffmpeg_executable(),
+            "-y",
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-i",
+            str(source),
+            "-vn",
+            "-ac",
+            str(channels),
+            "-ar",
+            str(sample_rate),
+            "-c:a",
+            "pcm_s16le",
+            "-f",
+            "s16le",
+            str(raw_path),
+        ]
+        result = subprocess.run(command, capture_output=True, text=True, check=False)
+        if result.returncode != 0:
+            raise AudioPipelineError(result.stderr.strip() or f"Не удалось нормализовать {source.name}")
+        payload = raw_path.read_bytes()
+
+    frame_width = channels * 2
+    if not payload or len(payload) % frame_width:
+        raise AudioPipelineError(f"FFmpeg создал некорректный PCM16 поток: {output.name}")
+    with wave.open(str(output), "wb") as target:
+        target.setnchannels(channels)
+        target.setsampwidth(2)
+        target.setframerate(sample_rate)
+        target.writeframes(payload)
+
+    channels_out, width, rate, _, _ = _native_wav_info(output)
+    if (channels_out, width, rate) != (channels, 2, sample_rate):
+        raise AudioPipelineError(
+            f"Некорректный формат после нормализации: {channels_out} каналов, {width * 8} бит, {rate} Гц"
+        )
+    return output
+'''
+          if text.count(old) != 1:
+              raise SystemExit("normalize_wav_pcm16 target block not found exactly once")
+          path.write_text(text.replace(old, new), encoding="utf-8")
+
+          test = Path("tests/test_audio_extensible_voice_lab.py")
+          test.write_text('''from __future__ import annotations
+
+import math
+import subprocess
+import wave
+from pathlib import Path
+
+from metrotrance.services.audio import concat_wavs, ffmpeg_executable, normalize_wav_pcm16, wav_info
+
+
+def _tone(path: Path, seconds: float = 0.25, rate: int = 24000) -> None:
+    frames = bytearray()
+    for index in range(int(seconds * rate)):
+        value = int(5000 * math.sin(2 * math.pi * 120 * index / rate))
+        frames.extend(value.to_bytes(2, "little", signed=True))
+    with wave.open(str(path), "wb") as stream:
+        stream.setnchannels(1)
+        stream.setsampwidth(2)
+        stream.setframerate(rate)
+        stream.writeframes(bytes(frames))
+
+
+def _format_tag(path: Path) -> int:
+    data = path.read_bytes()
+    offset = 12
+    while offset + 10 <= len(data):
+        size = int.from_bytes(data[offset + 4:offset + 8], "little")
+        if data[offset:offset + 4] == b"fmt ":
+            return int.from_bytes(data[offset + 8:offset + 10], "little")
+        offset += 8 + size + (size % 2)
+    raise AssertionError("fmt chunk missing")
+
+
+def test_extensible_input_becomes_classic_pcm16_and_concatenates(tmp_path: Path) -> None:
+    source = tmp_path / "source.wav"
+    _tone(source)
+    extensible = tmp_path / "extensible.wav"
+    result = subprocess.run([
+        ffmpeg_executable(), "-y", "-hide_banner", "-loglevel", "error",
+        "-i", str(source), "-ac", "2", "-c:a", "pcm_s24le", str(extensible),
+    ], capture_output=True, text=True, check=False)
+    assert result.returncode == 0, result.stderr
+    assert _format_tag(extensible) == 65534
+
+    first = normalize_wav_pcm16(extensible, tmp_path / "first.wav")
+    second = normalize_wav_pcm16(extensible, tmp_path / "second.wav")
+    assert _format_tag(first) == 1
+    assert _format_tag(second) == 1
+    assert wav_info(first)[:3] == (1, 2, 24000)
+
+    joined = concat_wavs([first, second], tmp_path / "joined.wav", pause_seconds=0.2)
+    assert _format_tag(joined) == 1
+    channels, width, rate, _, duration = wav_info(joined)
+    assert (channels, width, rate) == (1, 2, 24000)
+    assert 0.68 < duration < 0.75
+''', encoding="utf-8")
+          PY
+
+      - name: Run focused and full tests
+        run: |
+          python -m pip install -q -e ".[test]"
+          python -m compileall -q metrotrance tests
+          python -m pytest -q --tb=short tests/test_audio_extensible_voice_lab.py tests/test_audio.py tests/test_voice_test_job.py tests/test_voice_quality.py
+          python -m pytest -q --tb=short
+
+      - name: Commit verified fix and remove one-shot workflow
+        run: |
+          git config user.name "metrotrance-fix-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git rm .github/workflows/apply-audio-ci-stabilization.yml
+          git add metrotrance/services/audio.py tests/test_audio_extensible_voice_lab.py
+          git commit -m "Fix extensible WAV normalization in Voice Lab"
+          git push origin HEAD:fix/ci-stabilization-v040
