@@ -54,7 +54,20 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: python -m pip install -q -e ".[test]"
-      - run: python -m pytest -q --tb=short ${{ matrix.file }}
+      - name: Run provider contract
+        run: |
+          set +e
+          python -m pytest -q --tb=long "${{ matrix.file }}" > "pytest-${{ matrix.name }}.log" 2>&1
+          status=$?
+          cat "pytest-${{ matrix.name }}.log"
+          exit $status
+      - name: Upload provider diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-provider-${{ matrix.name }}
+          path: pytest-${{ matrix.name }}.log
+          if-no-files-found: error
 
   studio-profile:
     runs-on: ubuntu-latest
@@ -91,10 +104,12 @@ jobs:
             files: >-
               tests/test_voice_approval_gate.py tests/test_voice_profile.py
               tests/test_voice_quality.py
-          - name: runtime-windows
-            files: >-
-              tests/test_local_llama.py tests/test_pronunciation.py
-              tests/test_windows_launchers.py
+          - name: local-llama
+            files: tests/test_local_llama.py
+          - name: pronunciation
+            files: tests/test_pronunciation.py
+          - name: windows-launchers
+            files: tests/test_windows_launchers.py
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -103,4 +118,17 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: python -m pip install -q -e ".[test]"
-      - run: python -m pytest -q --tb=short ${{ matrix.files }}
+      - name: Run regression contour
+        run: |
+          set +e
+          python -m pytest -q --tb=long ${{ matrix.files }} > "pytest-${{ matrix.name }}.log" 2>&1
+          status=$?
+          cat "pytest-${{ matrix.name }}.log"
+          exit $status
+      - name: Upload regression diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-regression-${{ matrix.name }}
+          path: pytest-${{ matrix.name }}.log
+          if-no-files-found: error
