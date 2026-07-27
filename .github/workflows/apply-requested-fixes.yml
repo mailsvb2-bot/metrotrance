@@ -165,8 +165,9 @@ def test_release_version_is_synchronized() -> None:
               "            files: tests/test_release_version_sync.py tests/test_windows_launchers.py\n",
               1,
           )
-          compatibility_job = '''\n  python-compatibility:
-    name: python-${{ matrix.python-version }}-compatibility
+          matrix_expression = "$" + "{{ matrix.python-version }}"
+          compatibility_job = f'''\n  python-compatibility:
+    name: python-{matrix_expression}-compatibility
     strategy:
       fail-fast: false
       matrix:
@@ -176,7 +177,7 @@ def test_release_version_is_synchronized() -> None:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: {matrix_expression}
           cache: pip
       - run: python -m pip install -q -e ".[test]"
       - run: python -m pytest -q --tb=short tests/test_voice_quality.py tests/test_release_version_sync.py
