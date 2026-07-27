@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import math
+import random
 import subprocess
 import tempfile
 import wave
+from array import array
 from pathlib import Path
 
 
@@ -45,6 +48,72 @@ def _silence_bytes(seconds: float, channels: int, sample_width: int, sample_rate
     return b"\x00" * frames * channels * sample_width
 
 
+def _room_tone_bytes(
+    seconds: float,
+    channels: int,
+    sample_width: int,
+    sample_rate: int,
+    *,
+    seed: int,
+) -> bytes:
+    """Create a nearly inaudible shaped floor instead of absolute digital zero.
+
+    Real studios do not jump from speech to mathematically perfect zero.  Such
+    hard gaps make independently rendered TTS phrases sound pasted together.
+    The generated floor is intentionally very low (about -64 dBFS), deterministic
+    and contains no artificial breathing or semantic sound.
+    """
+
+    frames = max(0, int(sample_rate * seconds))
+    if frames == 0:
+        return b""
+    if sample_width != 2:
+        return _silence_bytes(seconds, channels, sample_width, sample_rate)
+
+    rng = random.Random(seed)
+    amplitude = max(2, int(32767.0 * (10.0 ** (-64.0 / 20.0))))
+    state = 0.0
+    samples = array("h")
+    for _ in range(frames):
+        triangular = (rng.random() + rng.random() - 1.0) * amplitude * 3.2
+        state = state * 0.90 + triangular * 0.10
+        value = int(max(-amplitude, min(amplitude, state * 2.4)))
+        for _channel in range(channels):
+            samples.append(value)
+    return samples.tobytes()
+
+
+def _microfade_pcm16(
+    payload: bytes,
+    channels: int,
+    sample_width: int,
+    sample_rate: int,
+    *,
+    milliseconds: float = 6.0,
+) -> bytes:
+    """Soften hard PCM chunk boundaries without stretching speech."""
+
+    if sample_width != 2 or not payload:
+        return payload
+    samples = array("h")
+    samples.frombytes(payload)
+    frame_count = len(samples) // max(1, channels)
+    fade_frames = min(frame_count // 2, max(1, int(sample_rate * milliseconds / 1000.0)))
+    if fade_frames <= 0:
+        return payload
+
+    for frame in range(fade_frames):
+        gain = math.sin(((frame + 1) / (fade_frames + 1)) * math.pi / 2.0)
+        start_frame = frame
+        end_frame = frame_count - 1 - frame
+        for channel in range(channels):
+            start_index = start_frame * channels + channel
+            end_index = end_frame * channels + channel
+            samples[start_index] = int(samples[start_index] * gain)
+            samples[end_index] = int(samples[end_index] * gain)
+    return samples.tobytes()
+
+
 def concat_wavs(
     parts: list[Path],
     output: Path,
@@ -57,7 +126,13 @@ def concat_wavs(
     output.parent.mkdir(parents=True, exist_ok=True)
     first = wav_info(parts[0])
     channels, sample_width, sample_rate, _, _ = first
-    edge_silence = _silence_bytes(edge_silence_seconds, channels, sample_width, sample_rate)
+    edge_floor = _room_tone_bytes(
+        edge_silence_seconds,
+        channels,
+        sample_width,
+        sample_rate,
+        seed=1913,
+    )
 
     if isinstance(pause_seconds, (list, tuple)):
         pauses = [max(0.0, float(value)) for value in pause_seconds]
@@ -70,25 +145,32 @@ def concat_wavs(
         out.setnchannels(channels)
         out.setsampwidth(sample_width)
         out.setframerate(sample_rate)
-        if edge_silence:
-            out.writeframes(edge_silence)
+        if edge_floor:
+            out.writeframes(edge_floor)
         for index, part in enumerate(parts):
             info = wav_info(part)
             if info[:3] != first[:3]:
                 raise AudioPipelineError(f"Несовместимые параметры WAV: {part.name}")
             try:
                 with wave.open(str(part), "rb") as src:
-                    out.writeframes(src.readframes(src.getnframes()))
+                    payload = src.readframes(src.getnframes())
             except wave.Error as exc:
                 raise AudioPipelineError(
                     f"WAV-фрагмент {part.name} не нормализован в обычный PCM16"
                 ) from exc
+            out.writeframes(_microfade_pcm16(payload, channels, sample_width, sample_rate))
             if index != len(parts) - 1:
-                gap = _silence_bytes(pauses[index], channels, sample_width, sample_rate)
+                gap = _room_tone_bytes(
+                    pauses[index],
+                    channels,
+                    sample_width,
+                    sample_rate,
+                    seed=7919 + index * 1009,
+                )
                 if gap:
                     out.writeframes(gap)
-        if edge_silence:
-            out.writeframes(edge_silence)
+        if edge_floor:
+            out.writeframes(edge_floor)
 
         # Retained only for backwards compatibility with older smoke tests.
         if minimum_duration_seconds is not None:
@@ -96,7 +178,15 @@ def concat_wavs(
             required_frames = int(max(0.0, minimum_duration_seconds) * sample_rate)
             if current_frames < required_frames:
                 missing = required_frames - current_frames
-                out.writeframes(b"\x00" * missing * channels * sample_width)
+                out.writeframes(
+                    _room_tone_bytes(
+                        missing / sample_rate,
+                        channels,
+                        sample_width,
+                        sample_rate,
+                        seed=104729,
+                    )
+                )
     return output
 
 
