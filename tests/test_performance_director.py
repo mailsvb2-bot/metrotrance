@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import sys
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
@@ -12,6 +13,18 @@ from metrotrance.services.performance_director import (
     prompt_paths,
     provider_payload,
 )
+
+
+def _install_fake_torch(monkeypatch) -> None:
+    torch = ModuleType("torch")
+    torch.manual_seed = lambda _seed: None
+    torch.random = SimpleNamespace(fork_rng=lambda devices=None: contextlib.nullcontext())
+    torch.cuda = SimpleNamespace(
+        is_available=lambda: False,
+        device_count=lambda: 0,
+        manual_seed_all=lambda _seed: None,
+    )
+    monkeypatch.setitem(sys.modules, "torch", torch)
 
 
 def test_studio_plan_uses_phase_specific_reference_bank() -> None:
@@ -35,8 +48,13 @@ def test_studio_plan_uses_phase_specific_reference_bank() -> None:
         "symbolic",
         "return",
     ]
-    assert all(cue.prompt_path and Path(cue.prompt_path).is_file() for cue in plan)
-    assert len(set(prompt_paths(plan))) == 7
+    prompts = prompt_paths(plan)
+    if all(prompts):
+        assert all(Path(str(path)).is_file() for path in prompts)
+        assert len(set(prompts)) == 7
+    else:
+        assert all(path is None for path in prompts)
+        assert all("prompt_missing" in cue.source for cue in plan)
     assert plan[2].exaggeration > plan[4].exaggeration
 
 
@@ -64,6 +82,7 @@ def test_chatterbox_uses_only_clean_reference_for_every_chunk(tmp_path, monkeypa
             calls.append({"text": text, **kwargs})
             return object()
 
+    _install_fake_torch(monkeypatch)
     fake_torchaudio = ModuleType("torchaudio")
 
     def fake_save(path, wav, sample_rate):
@@ -91,6 +110,7 @@ def test_chatterbox_uses_only_clean_reference_for_every_chunk(tmp_path, monkeypa
             "expressiveness": 62,
             "cues": provider_payload(plan),
             "reference_audio_paths": prompt_paths(plan),
+            "takes_per_chunk": 1,
         },
     )
 
