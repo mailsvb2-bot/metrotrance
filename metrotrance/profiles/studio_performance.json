@@ -1,0 +1,102 @@
+{
+  "id": "sergey_studio_performance_v1",
+  "name": "Студийная манера Сергея",
+  "source": "Пользовательская студийная запись «Новый рабочий день. Как запустить сердцевину спокойствия»",
+  "privacy": "Профиль содержит короткие фрагменты голоса пользователя и предназначен только для его локальной установки.",
+  "principle": "Тембр и манера не смешиваются в одну абстрактную настройку: чистый голосовой образец отвечает за идентичность, а банк студийных фрагментов — за просодию и драматургию.",
+  "phase_order": ["opening", "tension", "story", "insight", "deep_body", "symbolic", "return"],
+  "phases": {
+    "opening": {
+      "title": "Тёплое вступление",
+      "prompt": "opening.wav",
+      "position": [0.0, 0.14],
+      "expressiveness": 56,
+      "exaggeration": 0.56,
+      "cfg_weight": 0.38,
+      "temperature": 0.68,
+      "pause_multiplier": 0.95,
+      "direction": "Спокойно, тепло, с лёгкой бодрой нотой; фраза раскрывается постепенно, без дикторской рубки.",
+      "measured": {"median_f0_hz": 100.24, "f0_range_semitones": 12.1, "voiced_occupancy": 0.607}
+    },
+    "tension": {
+      "title": "Подстройка к напряжению",
+      "prompt": "tension.wav",
+      "position": [0.14, 0.29],
+      "expressiveness": 60,
+      "exaggeration": 0.61,
+      "cfg_weight": 0.33,
+      "temperature": 0.70,
+      "pause_multiplier": 1.05,
+      "direction": "Чуть тише и внимательнее; признавать напряжение без драматизации, с мягкими нисходящими окончаниями.",
+      "measured": {"median_f0_hz": 92.46, "f0_range_semitones": 12.1, "voiced_occupancy": 0.582}
+    },
+    "story": {
+      "title": "Образная история",
+      "prompt": "story.wav",
+      "position": [0.29, 0.48],
+      "expressiveness": 72,
+      "exaggeration": 0.72,
+      "cfg_weight": 0.27,
+      "temperature": 0.74,
+      "pause_multiplier": 0.90,
+      "direction": "Повествовательно и певуче; длинная интонационная дуга, живые акценты на образах, без монотонного чтения.",
+      "measured": {"median_f0_hz": 160.05, "f0_range_semitones": 13.2, "voiced_occupancy": 0.714}
+    },
+    "insight": {
+      "title": "Ключевое осознание",
+      "prompt": "insight.wav",
+      "position": [0.48, 0.61],
+      "expressiveness": 64,
+      "exaggeration": 0.65,
+      "cfg_weight": 0.30,
+      "temperature": 0.70,
+      "pause_multiplier": 1.12,
+      "direction": "Ясно и значимо, но без лозунгов; ключевая мысль произносится чуть медленнее и получает пространство после себя.",
+      "measured": {"median_f0_hz": 110.59, "f0_range_semitones": 12.5, "voiced_occupancy": 0.5}
+    },
+    "deep_body": {
+      "title": "Глубокая телесная работа",
+      "prompt": "deep_body.wav",
+      "position": [0.61, 0.75],
+      "expressiveness": 46,
+      "exaggeration": 0.50,
+      "cfg_weight": 0.42,
+      "temperature": 0.64,
+      "pause_multiplier": 1.30,
+      "direction": "Глубже, ниже и размереннее; не растягивать слова, а оставлять тишину после телесных инструкций.",
+      "measured": {"median_f0_hz": 109.95, "f0_range_semitones": 6.74, "voiced_occupancy": 0.544}
+    },
+    "symbolic": {
+      "title": "Символическая интеграция",
+      "prompt": "symbolic.wav",
+      "position": [0.75, 0.89],
+      "expressiveness": 58,
+      "exaggeration": 0.59,
+      "cfg_weight": 0.35,
+      "temperature": 0.68,
+      "pause_multiplier": 1.18,
+      "direction": "Ровно, собранно и образно; позволять символам задерживаться, не превращая голос в шёпот или декламацию.",
+      "measured": {"median_f0_hz": 111.23, "f0_range_semitones": 4.39, "voiced_occupancy": 0.894}
+    },
+    "return": {
+      "title": "Мягкое возвращение",
+      "prompt": "return.wav",
+      "position": [0.89, 1.0],
+      "expressiveness": 55,
+      "exaggeration": 0.56,
+      "cfg_weight": 0.39,
+      "temperature": 0.66,
+      "pause_multiplier": 0.95,
+      "direction": "Становиться яснее и чуть светлее, сохраняя плавность; возвращение — не команда, а естественный выход.",
+      "measured": {"median_f0_hz": 112.52, "f0_range_semitones": 11.1, "voiced_occupancy": 0.733}
+    }
+  },
+  "lexical_overrides": {
+    "return": ["возвращ", "откройте глаза", "звукам комнаты", "к окружающему", "бодрств"],
+    "deep_body": ["дыхание", "вдох", "выдох", "внутрь тела", "ощущение тела", "центр груди", "живот", "мышц"],
+    "symbolic": ["символ", "компас", "алтар", "образ", "свет", "звезда", "цвет", "пространстве воображения"],
+    "story": ["однажды", "жил", "история", "в одном", "человек", "часовщик", "путешествен"],
+    "insight": ["осознать", "понять", "смысл", "самое важное", "становится ясно", "и тогда"],
+    "tension": ["тревог", "напряж", "устал", "давление", "беспокой", "сопротивление"]
+  }
+}

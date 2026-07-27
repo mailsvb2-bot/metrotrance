@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "metrotrance"
+version = "0.3.1"
+description = "Local one-click AI relaxation audio generator with REST API"
+requires-python = ">=3.11,<3.13"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [{name = "MetroTrance"}]
+dependencies = [
+  "fastapi>=0.116,<1",
+  "uvicorn[standard]>=0.35,<1",
+  "pydantic>=2.11,<3",
+  "python-multipart>=0.0.20,<1",
+  "httpx>=0.28,<1",
+  "imageio-ffmpeg>=0.6,<1",
+  "python-docx>=1.2,<2",
+]
+
+[project.optional-dependencies]
+qwen = ["qwen-tts", "soundfile>=0.13", "silero-stress>=1.4,<2"]
+chatterbox = ["chatterbox-tts"]
+test = ["pytest>=8.4", "pytest-cov>=6.2", "httpx>=0.28"]
+
+[project.scripts]
+metrotrance = "metrotrance.__main__:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["metrotrance*"]
+
+[tool.setuptools.package-data]
+metrotrance = [
+  "static/*",
+  "profiles/*.json",
+  "resources/studio_style/*.wav",
+  "resources/studio_style/*.json",
+  "resources/studio_corpus/*.json",
+  "resources/studio_corpus/*/*.wav",
+  "resources/silero_stress/*",
+]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]

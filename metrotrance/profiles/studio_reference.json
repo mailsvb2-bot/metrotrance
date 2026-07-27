@@ -1,0 +1,43 @@
+{
+  "id": "studio_reference",
+  "name": "Студийный эталон Сергея",
+  "source_duration_seconds": 1913.55,
+  "source_word_count": 1526,
+  "overall_words_per_minute": 47.8,
+  "recommended_words_per_minute": {"min": 45, "max": 55},
+  "voice_occupancy": {"min": 0.65, "max": 0.70},
+  "pause_share": {"min": 0.30, "max": 0.35},
+  "pause_seconds": {
+    "short": 0.7,
+    "sentence": 0.9,
+    "question": 1.4,
+    "ellipsis": 2.3,
+    "paragraph": 3.6,
+    "semantic": 2.0,
+    "deep": 5.5,
+    "integration": 10.0
+  },
+  "pause_caps_seconds": {
+    "sentence": 2.5,
+    "question": 3.5,
+    "ellipsis": 5.0,
+    "paragraph": 10.0,
+    "explicit_short": 2.0,
+    "explicit_semantic": 4.5,
+    "explicit_deep": 8.0,
+    "explicit_long": 10.0,
+    "explicit_integration": 14.0
+  },
+  "mastering": {
+    "integrated_loudness_lufs": -19.3,
+    "loudness_range_lu": 14.0,
+    "true_peak_dbfs": -2.0
+  },
+  "rules": [
+    "Не растягивать и не замедлять готовую речь алгоритмом atempo или time-stretch.",
+    "Не добивать длительность хвостовой тишиной.",
+    "Паузы являются частью драматургии и сохраняют работающий фон.",
+    "При недостатке текста предупреждать, а не создавать чрезмерную пустоту.",
+    "Длинные паузы размещать после образов, телесных инструкций, вопросов и перед возвращением."
+  ]
+}

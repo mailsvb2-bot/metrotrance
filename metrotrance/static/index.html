@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MetroTrance</title>
+  <link rel="stylesheet" href="/styles.css?v=0.3.1">
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <p class="eyebrow">Локальная генерация аудиопрактик</p>
+        <h1>MetroTrance</h1>
+        <p class="subtitle">ИИ-сценарий или ваш текст, голосовая лаборатория, режиссёрские паузы и честная звуковая библиотека.</p>
+      </div>
+      <button class="ghost" id="settingsButton">Настроить голос</button>
+    </header>
+
+    <section class="status-grid" id="healthCards"></section>
+
+    <section class="card create-card">
+      <div class="field wide">
+        <label for="contentMode">Источник текста</label>
+        <select id="contentMode">
+          <option value="ai_fast" selected>ИИ — быстро, один проход</option>
+          <option value="ai_quality">ИИ — тщательно, план и редактура</option>
+          <option value="provided_text">Мой готовый текст — без ИИ</option>
+        </select>
+        <span class="field-note" id="contentModeHint"></span>
+      </div>
+
+      <div id="aiPanel">
+        <div class="field wide">
+          <label for="goal">Что должно измениться после прослушивания?</label>
+          <textarea id="goal" rows="3" placeholder="Например: мягко снять напряжение после рабочего дня и вернуть ощущение опоры"></textarea>
+        </div>
+        <details>
+          <summary>Дополнительные пожелания к сценарию</summary>
+          <textarea id="notes" rows="3" placeholder="Слова, образы или ограничения, которые важно учесть"></textarea>
+        </details>
+      </div>
+
+      <div id="textPanel" class="hidden">
+        <div class="field wide">
+          <label for="sourceText">Готовый текст</label>
+          <textarea id="sourceText" rows="12" placeholder="Вставьте текст полностью. Он будет озвучен без переписывания искусственным интеллектом."></textarea>
+          <div class="inline-upload"><input id="sourceFile" type="file" accept=".txt,.md,.docx"><button class="ghost" type="button" id="importTextButton">Загрузить TXT/DOCX</button><button class="ghost" type="button" id="previewStressButton">Проверить ударения</button></div>
+          <span class="field-note">Слова не переписываются. Паузы: [короткая пауза], [смысловая пауза], [глубокая пауза], [интеграционная пауза] или [пауза 8].</span>
+          <span class="text-estimate" id="textEstimate"></span>
+          <div class="stress-preview-status hidden" id="stressPreviewStatus" role="status" aria-live="polite"></div>
+          <div class="stress-preview-wrap hidden" id="stressPreviewWrap">
+            <div class="stress-preview-title">Исправление ударений перед озвучкой</div>
+            <textarea class="stress-preview-editor" id="stressPreviewEditor" rows="12" spellcheck="false" aria-label="Текст с ударениями для ручного исправления"></textarea>
+            <div class="stress-editor-toolbar">
+              <button class="ghost compact" type="button" id="insertStressMark">Поставить ударение</button>
+              <button class="ghost compact" type="button" id="removeWordStress">Убрать в слове</button>
+              <button class="ghost compact" type="button" id="resetStressEdits">Вернуть автоударения</button>
+            </div>
+            <p class="stress-editor-help">Поставьте курсор сразу после ударной гласной и нажмите «Поставить ударение». Можно также редактировать текст обычной клавиатурой.</p>
+            <div class="stress-editor-actions">
+              <button class="primary compact" type="button" id="applyStressEdits">Использовать исправленный текст</button>
+              <button class="ghost compact" type="button" id="saveStressCorrections">Сохранить исправленные слова в словарь</button>
+            </div>
+            <div class="stress-edit-message" id="stressEditMessage" role="status" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="field">
+          <label for="duration">Желаемая продолжительность</label>
+          <select id="duration">
+            <option value="1">1 минута — тест голоса</option>
+            <option value="5">5 минут</option>
+            <option value="10" selected>10 минут</option>
+            <option value="15">15 минут</option>
+            <option value="20">20 минут</option>
+            <option value="30">30 минут</option>
+          </select>
+          <span class="field-note" id="durationHint"></span>
+        </div>
+        <div class="field">
+          <label for="durationMode">Работа с длительностью</label>
+          <select id="durationMode">
+            <option value="fit" selected>Подогнать смысловыми паузами — без растяжения голоса</option>
+            <option value="natural">Оставить естественную длительность</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="pacingProfile">Режиссура пауз</label>
+          <select id="pacingProfile">
+            <option value="studio_reference" selected>Студийный эталон: 30–35% времени на паузы и фон</option>
+            <option value="natural">Естественная речь: более короткие паузы</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="address">Обращение</label>
+          <select id="address"><option value="вы">На «вы»</option><option value="ты">На «ты»</option></select>
+        </div>
+        <div class="field">
+          <label for="style">Смысловая манера</label>
+          <select id="style">
+            <option>мягкий, спокойный, доверительный</option>
+            <option>глубокий, медленный, уверенный</option>
+            <option>тёплый, заботливый, очень бережный</option>
+            <option>нейтральный, ясный, без театральности</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="performanceProfile">Исполнение</label>
+          <select id="performanceProfile">
+            <option value="warm_natural" selected>Тёплое естественное</option>
+            <option value="neutral">Ровное нейтральное</option>
+            <option value="studio_melodic">Экспериментальная студийная режиссура</option>
+          </select>
+          <span class="field-note">Студийные записи влияют только на темп, фазы и паузы. Они больше не передаются TTS как аудиореференсы с музыкой.</span>
+        </div>
+        <div class="field" id="studioStyleFamilyField">
+          <label for="studioStyleFamily">Какой из ваших студийных стилей использовать</label>
+          <select id="studioStyleFamily">
+            <option value="auto" selected>Автоматически по цели и тексту</option>
+            <option value="core_reference">Исходный эталон — «Сердцевина спокойствия»</option>
+            <option value="morning_reset">Утреннее собирание и настройка</option>
+            <option value="evening_release">Вечернее завершение и отпускание</option>
+            <option value="evening_sleep">Вечернее углубление и сон</option>
+            <option value="agency_shift">От «надо» к внутренней возможности</option>
+            <option value="mind_unload">Разгрузка мыслей и нервной системы</option>
+          </select>
+          <span class="field-note">Используется только режиссёрская разметка фаз и пауз. Аудиофрагменты студийных мастеров в голосовую модель не передаются.</span>
+        </div>
+        <div class="field">
+          <label for="ttsProvider">Движок голоса</label>
+          <select id="ttsProvider">
+            <option value="auto_expressive" selected>Авто: сначала Qwen, затем Chatterbox</option>
+            <option value="qwen">Qwen — приоритет узнаваемости</option>
+            <option value="chatterbox">Chatterbox — экспериментальный вариант</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="expressiveness">Выразительность: <span id="expressivenessValue">62</span>%</label>
+          <input id="expressiveness" type="range" min="0" max="100" value="62">
+        </div>
+        <div class="field">
+          <label for="ending">Состояние в конце</label>
+          <input id="ending" value="спокойствие и ясность">
+        </div>
+        <div class="field">
+          <label for="musicMode">Музыка</label>
+          <select id="musicMode">
+            <option value="none" selected>Без музыки</option>
+            <option value="auto_library">Автоматически из проверенной библиотеки</option>
+            <option value="library">Выбрать из моей библиотеки с правами</option>
+            <option value="technical_draft">Черновая техническая подложка</option>
+          </select>
+          <select id="musicAsset" class="hidden"></select>
+          <select id="technicalMusicStyle" class="hidden">
+            <option value="warm_ambient">Тёплые синусоиды</option>
+            <option value="deep_ambient">Низкие синусоиды</option>
+            <option value="studio_morning">Пульсирующие синусоиды</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="atmosphereMode">Атмосфера</label>
+          <select id="atmosphereMode">
+            <option value="none" selected>Без дополнительных звуков</option>
+            <option value="library">Из моей библиотеки с правами</option>
+            <option value="technical_draft">Черновая синтетическая атмосфера</option>
+          </select>
+          <select id="atmosphereAsset" class="hidden"></select>
+          <select id="technicalAtmosphereStyle" class="hidden">
+            <option value="brown_noise">Коричневый шум</option>
+            <option value="rain">Имитация дождя</option>
+            <option value="ocean">Имитация прибоя</option>
+            <option value="morning_city">Имитация города и птиц</option>
+            <option value="forest_birds">Имитация лесных птиц</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="musicLevel">Громкость музыки: <span id="musicLevelValue">16</span>%</label>
+          <input id="musicLevel" type="range" min="0" max="50" value="16">
+        </div>
+        <div class="field">
+          <label for="atmosphereLevel">Громкость атмосферы: <span id="atmosphereLevelValue">10</span>%</label>
+          <input id="atmosphereLevel" type="range" min="0" max="50" value="10">
+        </div>
+        <div class="field">
+          <label for="audioMixProfile">Сведение</label>
+          <select id="audioMixProfile">
+            <option value="studio_ducking" selected>Студийное: фон тише под голосом и раскрывается в паузах</option>
+            <option value="simple">Простое равномерное смешивание</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="soundDesignMode">Звуковая режиссура по тексту</label>
+          <select id="soundDesignMode">
+            <option value="auto_scene" selected>Автоматически: дождь, метро, город, лес и события по сценарию</option>
+            <option value="none">Не анализировать сцены</option>
+          </select>
+          <span class="field-note">Используются только вручную прослушанные безопасные файлы из локальной библиотеки.</span>
+        </div>
+        <div class="field sound-library-launch">
+          <label>Звуковая библиотека</label>
+          <button class="ghost" type="button" id="soundLibraryButton">Добавить музыку, атмосферу или событие</button>
+        </div>
+      </div>
+
+      <div class="voice-gate-actions">
+        <button class="ghost voice-test-button" id="voiceTestButton" type="button">Слепой тест голоса — 30–45 секунд</button>
+        <button class="primary" id="createButton">Создать аудио</button>
+      </div>
+      <p class="fineprint">Для записи длиннее одной минуты сначала создаются несколько коротких кандидатов. MetroTrance не объявляет голос живым автоматически: подходящий вариант выбираете вы после прослушивания.</p>
+    </section>
+
+    <section class="card progress-card hidden" id="progressCard">
+      <div class="progress-head"><strong id="stage">Запуск…</strong><span id="progressText">0%</span></div>
+      <div class="progress"><div id="progressBar"></div></div>
+      <p id="jobMessage"></p>
+    </section>
+
+    <section class="card result-card hidden" id="resultCard">
+      <h2 id="resultTitle">Готовая запись</h2>
+      <div id="voiceLabResults" class="hidden"></div>
+      <div id="productionResult">
+        <audio id="player" controls></audio>
+        <div class="actions">
+          <a class="primary link-button" id="downloadMp3">Скачать MP3</a>
+          <a class="ghost link-button" id="downloadWav">Скачать WAV</a>
+          <a class="ghost link-button" id="downloadOpus">Скачать OPUS</a>
+          <a class="ghost link-button" id="downloadScript">Скачать исходный текст</a>
+          <a class="ghost link-button" id="downloadTtsScript">Скачать текст с ударениями</a>
+          <a class="ghost link-button" id="downloadPassport">Паспорт звука и прав</a>
+          <a class="ghost link-button" id="downloadSoundPlan">План звуковых сцен</a>
+          <a class="ghost link-button" id="downloadPerformancePlan">План исполнения</a>
+          <a class="ghost link-button" id="downloadAudioSafety">Отчёт аудиобезопасности</a>
+        </div>
+      </div>
+      <div id="warnings"></div>
+    </section>
+  </main>
+
+  <dialog id="settingsDialog">
+    <form method="dialog" class="dialog-card" id="voiceForm">
+      <div class="dialog-head"><h2>Ваш голос</h2><button type="button" class="close" data-dialog-close aria-label="Закрыть окно">×</button></div>
+      <p>Запишите 20–45 секунд чистой русской речи без музыки и эха. Говорите медленно и плавно — именно так, как должен звучать транс.</p>
+      <div class="field"><label for="voiceFile">Аудиофайл</label><input id="voiceFile" type="file" accept="audio/*" required></div>
+      <div class="field"><label for="transcript">Точный текст записи</label><textarea id="transcript" rows="5" required placeholder="Дословно перепишите произнесённые слова, включая повторы и э-э-э."></textarea></div>
+      <button class="primary" type="submit" id="saveVoice" value="default">Сохранить голос</button>
+      <p id="voiceMessage"></p>
+      <hr>
+      <h3>Словарь произношения</h3>
+      <p>Автоматическая модель расставляет ударения по контексту. Здесь можно навсегда исправить отдельные слова. Одна строка: <strong>слово=сло́во</strong>.</p>
+      <div class="field"><label for="pronunciationDictionary">Личные исправления</label><textarea id="pronunciationDictionary" rows="7" placeholder="например:\nдоговор=догово́р\nзвонит=звони́т"></textarea></div>
+      <button class="ghost" type="button" id="savePronunciation">Сохранить словарь</button>
+      <p id="pronunciationMessage"></p>
+    </form>
+  </dialog>
+
+  <dialog id="soundLibraryDialog">
+    <form method="dialog" class="dialog-card" id="soundAssetForm">
+      <div class="dialog-head"><h2>Звуковая библиотека</h2><button type="button" class="close" data-dialog-close aria-label="Закрыть окно">×</button></div>
+      <p>Загружайте только собственные дорожки или музыку с разрешённым коммерческим использованием. MetroTrance сохранит основание использования в паспорте записи.</p>
+      <div class="grid">
+        <div class="field"><label for="assetKind">Тип</label><select id="assetKind"><option value="music">Музыка</option><option value="atmosphere">Атмосфера / длительный фон</option><option value="event">Разовое событие</option></select></div>
+        <div class="field"><label for="assetCategory">Стиль</label><select id="assetCategory"><option value="sleep">Сон</option><option value="relaxation">Расслабление</option><option value="morning">Утро</option><option value="deep">Глубокий</option><option value="warm">Тёплый</option><option value="nature">Природа</option><option value="city">Город</option><option value="rain">Дождь</option><option value="ocean">Океан</option><option value="forest">Лес</option><option value="birds">Птицы</option><option value="metro">Метро</option><option value="cafe">Кафе</option><option value="room">Комната</option><option value="fire">Костёр</option><option value="stream">Ручей</option><option value="horn">Далёкий клаксон</option><option value="car_passing">Проезд автомобиля</option><option value="doors">Двери</option><option value="footsteps">Шаги</option><option value="custom">Другое</option></select></div>
+      </div>
+      <div class="field"><label for="assetFile">Аудиофайл</label><input id="assetFile" type="file" accept="audio/*" required></div>
+      <div class="field"><label for="assetTitle">Название</label><input id="assetTitle" placeholder="Например: Тёплое утро 01"></div>
+      <div class="field"><label for="assetLicense">Основание использования</label><select id="assetLicense" required><option value="">Выберите</option><option value="owned_exclusive">Моя собственная музыка и запись</option><option value="commissioned_with_rights">Заказана с передачей прав</option><option value="licensed_commercial">Есть коммерческая лицензия</option><option value="public_domain_cc0">Public domain / CC0</option><option value="pixabay_content_license">Pixabay Content License</option></select></div>
+      <div class="field"><label for="assetSourceNote">Документ / источник / примечание</label><textarea id="assetSourceNote" rows="3" placeholder="Номер договора, название лицензии, автор или источник"></textarea></div>
+      <label class="rights-check"><input id="assetRightsConfirmed" type="checkbox" required> Я подтверждаю право использовать и включать эту дорожку в готовые записи.</label>
+      <div class="field"><label for="assetTags">Теги сцен</label><input id="assetTags" placeholder="например: дождь, город, ночь"></div>
+      <div class="field"><label for="assetRecommendedDb">Рекомендуемый уровень, dB</label><input id="assetRecommendedDb" type="number" min="-60" max="-12" step="1" value="-34"></div>
+      <div class="field"><label for="assetEvidence">Доказательство лицензии</label><textarea id="assetEvidence" rows="2" placeholder="Ссылка на страницу, путь к сертификату или номер договора"></textarea></div>
+      <label class="rights-check"><input id="assetContentReviewed" type="checkbox"> Я полностью прослушал файл: нет сирен, чужой речи, резких ударов, грома и пугающих пиков.</label>
+      <label class="rights-check"><input id="assetSafeForTrance" type="checkbox"> Разрешить автоматическому аудиорежиссёру использовать этот файл.</label>
+      <button class="primary" type="submit" id="saveSoundAsset" value="default">Добавить в библиотеку</button>
+      <p id="soundAssetMessage"></p>
+      <hr>
+      <div id="soundAssetList" class="asset-list"></div>
+    </form>
+  </dialog>
+  <script src="/app.js?v=0.3.1"></script>
+</body>
+</html>

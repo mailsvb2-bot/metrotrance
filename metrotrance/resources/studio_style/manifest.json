@@ -1,0 +1,58 @@
+{
+  "profile_id": "sergey_studio_performance_v1",
+  "source_title": "Новый рабочий день. Как запустить сердцевину спокойствия",
+  "source_owned_by_user": true,
+  "processing": "center-channel extraction, gentle band-pass and dynamics; no external API",
+  "privacy": "personal voice material; do not redistribute",
+  "items": [
+    {
+      "file": "deep_body.wav",
+      "sha256": "806d2c126a0592c96953354a34ed22f42708faa80df09a4ef62a6601d93655a0",
+      "duration_seconds": 16.0,
+      "sample_rate_hz": 24000,
+      "channels": 1
+    },
+    {
+      "file": "insight.wav",
+      "sha256": "50374b26b95efc2ce9f1e212b942d7a0d4d0d2328469b5960d46123867d4a83d",
+      "duration_seconds": 16.0,
+      "sample_rate_hz": 24000,
+      "channels": 1
+    },
+    {
+      "file": "opening.wav",
+      "sha256": "393ec4aaa8978114128f3f5e717619b8b3617f6a26a27b2cb047ae6b4eb0852a",
+      "duration_seconds": 16.0,
+      "sample_rate_hz": 24000,
+      "channels": 1
+    },
+    {
+      "file": "return.wav",
+      "sha256": "8d8dfa26fa8b88002d8dfd6bb95490168810bdd52c0ea4e4cbccd357027a933d",
+      "duration_seconds": 16.0,
+      "sample_rate_hz": 24000,
+      "channels": 1
+    },
+    {
+      "file": "story.wav",
+      "sha256": "5cf058b50e4796a3fd30aa3ab3aefa560d52c30f40dcd80396468d9b6ff4cb69",
+      "duration_seconds": 16.0,
+      "sample_rate_hz": 24000,
+      "channels": 1
+    },
+    {
+      "file": "symbolic.wav",
+      "sha256": "15b1234d6b9ba62fa922fac957038ac85699226b509ce6928ade736ffa0b4305",
+      "duration_seconds": 16.0,
+      "sample_rate_hz": 24000,
+      "channels": 1
+    },
+    {
+      "file": "tension.wav",
+      "sha256": "49ea16dc192cc70bdce5c3dd05fb7a99ffc4ed5d8d19e3d5fcbaf3061d453ca4",
+      "duration_seconds": 16.0,
+      "sample_rate_hz": 24000,
+      "channels": 1
+    }
+  ]
+}

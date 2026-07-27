@@ -1,0 +1,459 @@
+{
+  "version": 1,
+  "privacy": "Содержит короткие фрагменты студийного голоса пользователя. Только локальное использование.",
+  "families": {
+    "evening_release": {
+      "title": "Вечернее завершение и отпускание",
+      "source_recording": "08_День завершает свой круг, солнце клонится к горизонту, отбрасывая длинные усталые тени.mp3",
+      "tags": [
+        "вечер",
+        "усталость",
+        "завершение",
+        "расслабление",
+        "после работы",
+        "отпустить"
+      ],
+      "duration_seconds": 1827.0,
+      "prompts": {
+        "opening": {
+          "file": "evening_release/opening.wav",
+          "source_start_seconds": 68.27,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 67.27,
+            "end": 81.27,
+            "vad": 0.8755,
+            "rms_db": -22.727,
+            "speech_band_ratio": 0.7219,
+            "dynamics_db": 6.895,
+            "score": 3.6381
+          },
+          "sha256": "2b74dbaf3f9408520ce35c24aeb9f8c0cfca245a4a0c15491a5db61af211d144"
+        },
+        "settling": {
+          "file": "evening_release/settling.wav",
+          "source_start_seconds": 515.78,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 514.78,
+            "end": 528.78,
+            "vad": 0.8841,
+            "rms_db": -22.32,
+            "speech_band_ratio": 0.7056,
+            "dynamics_db": 7.0,
+            "score": 3.68755
+          },
+          "sha256": "d4afaebf5a6ceacf5682fd5c92be265b8688f63a9c9fd98f4f10ddfbb6a73023"
+        },
+        "story": {
+          "file": "evening_release/story.wav",
+          "source_start_seconds": 634.64,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 633.64,
+            "end": 647.64,
+            "vad": 0.8712,
+            "rms_db": -22.348,
+            "speech_band_ratio": 0.6882,
+            "dynamics_db": 7.326,
+            "score": 3.6394
+          },
+          "sha256": "562f5fcf9e22a8d0ac8d8c877c8deabbcacccc7df025561819ca277ab416eaa6"
+        },
+        "deep": {
+          "file": "evening_release/deep.wav",
+          "source_start_seconds": 1308.39,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 1307.39,
+            "end": 1321.39,
+            "vad": 0.7639,
+            "rms_db": -20.415,
+            "speech_band_ratio": 0.6075,
+            "dynamics_db": 9.447,
+            "score": 3.19516
+          },
+          "sha256": "53efd4f4157c8f1c9e92f13148dad3875960d9cf4e80388a535a94513f268662"
+        },
+        "return": {
+          "file": "evening_release/return.wav",
+          "source_start_seconds": 1754.22,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 1753.22,
+            "end": 1767.22,
+            "vad": 0.7446,
+            "rms_db": -19.42,
+            "speech_band_ratio": 0.5747,
+            "dynamics_db": 10.614,
+            "score": 3.07188
+          },
+          "sha256": "d568045f530113a50d916e3b631b23a19837525e0faf19c38a0b8e3c349792a5"
+        }
+      }
+    },
+    "evening_sleep": {
+      "title": "Вечернее углубление и сон",
+      "source_recording": "11_День завершил свой круг, солнце скрывается за горизонтом, уступая место вечерним сумеркам.mp3",
+      "tags": [
+        "вечер",
+        "сон",
+        "сонливость",
+        "заснуть",
+        "покой",
+        "сумерки"
+      ],
+      "duration_seconds": 1638.0,
+      "prompts": {
+        "opening": {
+          "file": "evening_sleep/opening.wav",
+          "source_start_seconds": 52.38,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 51.38,
+            "end": 65.38,
+            "vad": 0.9807,
+            "rms_db": -21.053,
+            "speech_band_ratio": 0.9367,
+            "dynamics_db": 7.905,
+            "score": 4.16093
+          },
+          "sha256": "7d46aed0d46f86178a7a8e63c4c91803b27c98417f27d82240c7dc027cdfdbc0"
+        },
+        "settling": {
+          "file": "evening_sleep/settling.wav",
+          "source_start_seconds": 489.32,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 488.32,
+            "end": 502.32,
+            "vad": 0.985,
+            "rms_db": -20.537,
+            "speech_band_ratio": 0.832,
+            "dynamics_db": 8.009,
+            "score": 4.0692
+          },
+          "sha256": "28a20be26fde95313a66c2df5e0ec89574d496524626eb9acaf122e735029b50"
+        },
+        "story": {
+          "file": "evening_sleep/story.wav",
+          "source_start_seconds": 539.16,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 538.16,
+            "end": 552.16,
+            "vad": 0.9828,
+            "rms_db": -22.603,
+            "speech_band_ratio": 0.6907,
+            "dynamics_db": 7.29,
+            "score": 4.00164
+          },
+          "sha256": "9a55186b790647d79a977231adf18618736dd83d76a1bd73fc5af94ce3003a4b"
+        },
+        "deep": {
+          "file": "evening_sleep/deep.wav",
+          "source_start_seconds": 1214.66,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 1213.66,
+            "end": 1227.66,
+            "vad": 0.9421,
+            "rms_db": -27.942,
+            "speech_band_ratio": 0.9954,
+            "dynamics_db": 3.264,
+            "score": 3.58174
+          },
+          "sha256": "e95e4d6d0e070601ebdee83b3ace937db05e53c8a9e7c3a118f54435d8d565d4"
+        },
+        "return": {
+          "file": "evening_sleep/return.wav",
+          "source_start_seconds": 1451.68,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 1450.68,
+            "end": 1464.68,
+            "vad": 0.7661,
+            "rms_db": -18.164,
+            "speech_band_ratio": 0.7155,
+            "dynamics_db": 9.557,
+            "score": 3.12373
+          },
+          "sha256": "b81d2905a2eb926e835e592b87654c74cbc877efbf2f3a0d5288ac3c771455c1"
+        }
+      }
+    },
+    "morning_reset": {
+      "title": "Утреннее собирание и настройка",
+      "source_recording": "12_Утро, за окном знакомый пейзаж, возможно, серый от дождя или тумана.opus",
+      "tags": [
+        "утро",
+        "рабочий день",
+        "ясность",
+        "настройка",
+        "дождь",
+        "туман",
+        "начало дня"
+      ],
+      "duration_seconds": 1341.0035,
+      "prompts": {
+        "opening": {
+          "file": "morning_reset/opening.wav",
+          "source_start_seconds": 56.41,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 55.41,
+            "end": 69.41,
+            "vad": 1.0,
+            "rms_db": -20.471,
+            "speech_band_ratio": 0.818,
+            "dynamics_db": 6.761,
+            "score": 4.06844
+          },
+          "sha256": "33338ba2670c7606013749709db2159fc244efd6319225d75af1825fff78830e"
+        },
+        "settling": {
+          "file": "morning_reset/settling.wav",
+          "source_start_seconds": 349.74,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 348.74,
+            "end": 362.74,
+            "vad": 1.0,
+            "rms_db": -20.858,
+            "speech_band_ratio": 0.8098,
+            "dynamics_db": 6.731,
+            "score": 4.08881
+          },
+          "sha256": "6e94cfe4d6646cf65970b35822d8da007d72118c32efcf58c458a713ef7b7aff"
+        },
+        "story": {
+          "file": "morning_reset/story.wav",
+          "source_start_seconds": 598.121,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 597.121,
+            "end": 611.121,
+            "vad": 0.8712,
+            "rms_db": -25.964,
+            "speech_band_ratio": 0.7291,
+            "dynamics_db": 5.726,
+            "score": 3.3669
+          },
+          "sha256": "355cb3ea7267c462073e66aaa1491d0ab816702e55014627c97034ef298c097e"
+        },
+        "deep": {
+          "file": "morning_reset/deep.wav",
+          "source_start_seconds": 982.372,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 981.372,
+            "end": 995.372,
+            "vad": 0.9635,
+            "rms_db": -21.667,
+            "speech_band_ratio": 0.7556,
+            "dynamics_db": 7.344,
+            "score": 4.0019
+          },
+          "sha256": "1c44eadfa4c6fbd881e593fe08ff9cbfacc61421004ff26ba301693b24e103d2"
+        },
+        "return": {
+          "file": "morning_reset/return.wav",
+          "source_start_seconds": 1217.263,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 1216.263,
+            "end": 1230.263,
+            "vad": 0.7961,
+            "rms_db": -22.306,
+            "speech_band_ratio": 0.7078,
+            "dynamics_db": 7.962,
+            "score": 3.41976
+          },
+          "sha256": "7cb61a91242b2b64160aed445f614c4613bfa109ac66e0f368babc19fc1361d9"
+        }
+      }
+    },
+    "agency_shift": {
+      "title": "Переход от давления к внутренней возможности",
+      "source_recording": "13_От Надо к Могу.mp3",
+      "tags": [
+        "надо",
+        "могу",
+        "мотивация",
+        "ресурс",
+        "выбор",
+        "возможность",
+        "сила"
+      ],
+      "duration_seconds": 1786.0,
+      "prompts": {
+        "opening": {
+          "file": "agency_shift/opening.wav",
+          "source_start_seconds": 172.86,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 171.86,
+            "end": 185.86,
+            "vad": 0.8562,
+            "rms_db": -24.312,
+            "speech_band_ratio": 0.5885,
+            "dynamics_db": 6.505,
+            "score": 3.35643
+          },
+          "sha256": "b8dc348446ff764e0806e1c474ad9cd1516cc05dd0c3be9f7e64fed955c0a0b9"
+        },
+        "settling": {
+          "file": "agency_shift/settling.wav",
+          "source_start_seconds": 531.04,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 530.04,
+            "end": 544.04,
+            "vad": 0.867,
+            "rms_db": -23.5,
+            "speech_band_ratio": 0.7341,
+            "dynamics_db": 6.843,
+            "score": 3.5618
+          },
+          "sha256": "81b50f6a81eb9703db1fc48f4f4345f32f5a39ec97244d35f6df74563302857a"
+        },
+        "story": {
+          "file": "agency_shift/story.wav",
+          "source_start_seconds": 733.52,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 732.52,
+            "end": 746.52,
+            "vad": 0.6824,
+            "rms_db": -21.977,
+            "speech_band_ratio": 0.6719,
+            "dynamics_db": 9.268,
+            "score": 3.06688
+          },
+          "sha256": "0552fd2cccde59ebb4c389151e7db2e85a6b72cfc309ffe5e647803db3a70bd4"
+        },
+        "deep": {
+          "file": "agency_shift/deep.wav",
+          "source_start_seconds": 1243.02,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 1242.02,
+            "end": 1256.02,
+            "vad": 0.7339,
+            "rms_db": -20.813,
+            "speech_band_ratio": 0.6669,
+            "dynamics_db": 9.299,
+            "score": 3.15799
+          },
+          "sha256": "05f9f1606a3af61397451defa78c8451e8dc1e507c79024e87cf22dfcde9d61c"
+        },
+        "return": {
+          "file": "agency_shift/return.wav",
+          "source_start_seconds": 1676.96,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 1675.96,
+            "end": 1689.96,
+            "vad": 0.7682,
+            "rms_db": -17.105,
+            "speech_band_ratio": 0.8632,
+            "dynamics_db": 10.101,
+            "score": 3.17661
+          },
+          "sha256": "91d9057b31ff054192ea1613cb4a3a5fa844814bc2922050cd888dc76e5d4eb9"
+        }
+      }
+    },
+    "mind_unload": {
+      "title": "Разгрузка мыслей и нервной системы",
+      "source_recording": "14_Разгрузить Мозг.mp3",
+      "tags": [
+        "разгрузить мозг",
+        "мысли",
+        "перегрузка",
+        "напряжение",
+        "успокоиться",
+        "тишина",
+        "сон"
+      ],
+      "duration_seconds": 1849.5,
+      "prompts": {
+        "opening": {
+          "file": "mind_unload/opening.wav",
+          "source_start_seconds": 243.495,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 242.495,
+            "end": 256.495,
+            "vad": 0.985,
+            "rms_db": -23.667,
+            "speech_band_ratio": 0.7679,
+            "dynamics_db": 5.943,
+            "score": 3.9481
+          },
+          "sha256": "95c8ee81300a52f8bbae62d474381fb20c57cef5a990f0c31bdef7790a2d766a"
+        },
+        "settling": {
+          "file": "mind_unload/settling.wav",
+          "source_start_seconds": 357.93,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 356.93,
+            "end": 370.93,
+            "vad": 0.9914,
+            "rms_db": -21.446,
+            "speech_band_ratio": 0.8445,
+            "dynamics_db": 6.59,
+            "score": 4.12083
+          },
+          "sha256": "ee8a127c0e8b1a6bb73998e704e760010327bf8b9eed4bc2822833e76ab01efe"
+        },
+        "story": {
+          "file": "mind_unload/story.wav",
+          "source_start_seconds": 809.84,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 808.84,
+            "end": 822.84,
+            "vad": 0.9871,
+            "rms_db": -21.746,
+            "speech_band_ratio": 0.8487,
+            "dynamics_db": 7.903,
+            "score": 4.1696
+          },
+          "sha256": "e263a83d6b8d4ebe559adf9a40bad809f213a8e9dcc66fedd55b9e5cd456a9a8"
+        },
+        "deep": {
+          "file": "mind_unload/deep.wav",
+          "source_start_seconds": 1447.215,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 1446.215,
+            "end": 1460.215,
+            "vad": 0.9828,
+            "rms_db": -21.164,
+            "speech_band_ratio": 0.8901,
+            "dynamics_db": 7.99,
+            "score": 4.14586
+          },
+          "sha256": "6a0b97e40bdd661473a01f44bfb6aa11c47ff2b7a95113059d1d55ab109bc8df"
+        },
+        "return": {
+          "file": "mind_unload/return.wav",
+          "source_start_seconds": 1759.57,
+          "duration_seconds": 12.0,
+          "selection_metrics": {
+            "start": 1758.57,
+            "end": 1772.57,
+            "vad": 0.9785,
+            "rms_db": -22.046,
+            "speech_band_ratio": 0.797,
+            "dynamics_db": 7.569,
+            "score": 4.10879
+          },
+          "sha256": "a0d978c44432134c99056480b8144b408c6404658980c1ed54c8bf1fc186a602"
+        }
+      }
+    }
+  }
+}
