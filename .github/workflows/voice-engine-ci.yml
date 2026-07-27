@@ -31,7 +31,12 @@ jobs:
       - run: python -m pip install -q -e ".[test]"
       - run: python -m compileall -q metrotrance tests
       - name: Natural voice and audio joins
-        run: python -m pytest -q --tb=short tests/test_natural_voice.py tests/test_natural_join.py tests/test_audio.py
+        run: |
+          set +e
+          python -m pytest -q --tb=short tests/test_natural_voice.py tests/test_natural_join.py tests/test_audio.py > pytest.log 2>&1
+          status=$?
+          tail -n 100 pytest.log
+          exit $status
 
   provider-contracts:
     runs-on: ubuntu-latest
@@ -43,7 +48,12 @@ jobs:
           cache: pip
       - run: python -m pip install -q -e ".[test]"
       - name: Qwen and Chatterbox contracts
-        run: python -m pytest -q --tb=short tests/test_qwen_provider.py tests/test_chatterbox_compatibility.py tests/test_provider_priority.py tests/test_voice_test_job.py
+        run: |
+          set +e
+          python -m pytest -q --tb=short tests/test_qwen_provider.py tests/test_chatterbox_compatibility.py tests/test_provider_priority.py tests/test_voice_test_job.py > pytest.log 2>&1
+          status=$?
+          tail -n 100 pytest.log
+          exit $status
 
   studio-profile:
     runs-on: ubuntu-latest
@@ -55,7 +65,12 @@ jobs:
           cache: pip
       - run: python -m pip install -q -e ".[test]"
       - name: Private corpus fallbacks and performance plan
-        run: python -m pytest -q --tb=short tests/test_style_corpus.py tests/test_studio_profile.py tests/test_performance_director.py tests/test_studio_audio_mix.py
+        run: |
+          set +e
+          python -m pytest -q --tb=short tests/test_style_corpus.py tests/test_studio_profile.py tests/test_performance_director.py tests/test_studio_audio_mix.py > pytest.log 2>&1
+          status=$?
+          tail -n 100 pytest.log
+          exit $status
 
   remaining-suite:
     runs-on: ubuntu-latest
@@ -67,16 +82,20 @@ jobs:
           cache: pip
       - run: python -m pip install -q -e ".[test]"
       - name: Remaining regression suite
-        run: >-
-          python -m pytest -q --tb=short
-          --ignore=tests/test_natural_voice.py
-          --ignore=tests/test_natural_join.py
-          --ignore=tests/test_audio.py
-          --ignore=tests/test_qwen_provider.py
-          --ignore=tests/test_chatterbox_compatibility.py
-          --ignore=tests/test_provider_priority.py
-          --ignore=tests/test_voice_test_job.py
-          --ignore=tests/test_style_corpus.py
-          --ignore=tests/test_studio_profile.py
-          --ignore=tests/test_performance_director.py
-          --ignore=tests/test_studio_audio_mix.py
+        run: |
+          set +e
+          python -m pytest -q --tb=short \
+            --ignore=tests/test_natural_voice.py \
+            --ignore=tests/test_natural_join.py \
+            --ignore=tests/test_audio.py \
+            --ignore=tests/test_qwen_provider.py \
+            --ignore=tests/test_chatterbox_compatibility.py \
+            --ignore=tests/test_provider_priority.py \
+            --ignore=tests/test_voice_test_job.py \
+            --ignore=tests/test_style_corpus.py \
+            --ignore=tests/test_studio_profile.py \
+            --ignore=tests/test_performance_director.py \
+            --ignore=tests/test_studio_audio_mix.py > pytest.log 2>&1
+          status=$?
+          tail -n 100 pytest.log
+          exit $status
