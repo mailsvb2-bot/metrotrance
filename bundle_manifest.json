@@ -50,7 +50,6 @@
     "metrotrance/services/audio_assets.py",
     "metrotrance/services/chunker.py",
     "metrotrance/services/local_llama.py",
-    "metrotrance/services/natural_join.py",
     "metrotrance/services/natural_voice.py",
     "metrotrance/services/pacing.py",
     "metrotrance/services/performance_director.py",
